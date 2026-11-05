@@ -1888,6 +1888,7 @@ import {
     collection,
     addDoc,
     query,
+    where,
     orderBy,
     onSnapshot,
     serverTimestamp,
@@ -3413,6 +3414,26 @@ async function(){
             );
 
 
+        const chatRef =
+            doc(db,"chats",chatId);
+
+        const participants = [
+            currentUser.uid,
+            currentChatUser.id
+        ].sort();
+
+        // Create the parent first so rules can verify chat membership.
+        await setDoc(
+            chatRef,
+            {
+                participants:participants,
+                updatedAt:serverTimestamp()
+            },
+            {
+                merge:true
+            }
+        );
+
         const messagesRef =
             collection(
                 db,
@@ -3421,47 +3442,22 @@ async function(){
                 "messages"
             );
 
-
         await addDoc(
             messagesRef,
             {
-
                 text:text,
-
-                senderId:
-                    currentUser.uid,
-
-                receiverId:
-                    currentChatUser.id,
-
-                createdAt:
-                    serverTimestamp()
-
+                senderId:currentUser.uid,
+                receiverId:currentChatUser.id,
+                createdAt:serverTimestamp()
             }
         );
 
-
         await setDoc(
-            doc(
-                db,
-                "chats",
-                chatId
-            ),
+            chatRef,
             {
-
-                participants:[
-                    currentUser.uid,
-                    currentChatUser.id
-                ],
-
                 lastMessage:text,
-
-                lastSenderId:
-                    currentUser.uid,
-
-                updatedAt:
-                    serverTimestamp()
-
+                lastMessageSenderId:currentUser.uid,
+                updatedAt:serverTimestamp()
             },
             {
                 merge:true
@@ -3578,9 +3574,9 @@ async function renderChats(){
 
         const chatsSnapshot =
             await getDocs(
-                collection(
-                    db,
-                    "chats"
+                query(
+                    collection(db,"chats"),
+                    where("participants","array-contains",currentUser.uid)
                 )
             );
 
