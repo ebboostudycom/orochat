@@ -3422,19 +3422,18 @@ async function(){
             currentChatUser.id
         ].sort();
 
-        // Create the parent only for a new conversation. Existing chat
-        // participant arrays are left untouched for backward compatibility.
-        const existingChat = await getDoc(chatRef);
-
-        if(!existingChat.exists()){
-            await setDoc(
-                chatRef,
-                {
-                    participants:participants,
-                    updatedAt:serverTimestamp()
-                }
-            );
-        }
+        // Ensure the parent exists before writing a message. The rules
+        // permit reordering the same two participants, but not replacing them.
+        await setDoc(
+            chatRef,
+            {
+                participants:participants,
+                updatedAt:serverTimestamp()
+            },
+            {
+                merge:true
+            }
+        );
 
         const messagesRef =
             collection(
