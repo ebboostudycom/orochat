@@ -59,7 +59,8 @@ service cloud.firestore {
     }
 
     match /chats/{chatId} {
-      allow read: if isChatParticipant(chatId);
+      allow read: if signedIn()
+        && request.auth.uid in resource.data.participants;
 
       allow create: if signedIn()
         && validChatParticipants(request.resource.data)
@@ -72,7 +73,8 @@ service cloud.firestore {
           || request.resource.data.participantNames is map
         );
 
-      allow update: if isChatParticipant(chatId)
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly([
