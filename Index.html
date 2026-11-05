@@ -1790,7 +1790,9 @@ button:disabled{
             id="messageInput"
             class="chatInput"
             type="text"
-            placeholder="Message..."
+            maxlength="4000"
+            autocomplete="off"
+            placeholder="Message (max 4,000 characters)..."
             onkeydown="handleMessageKey(event)">
 
         <button
@@ -3395,6 +3397,14 @@ async function(){
 
 
     if(!text){
+
+        return;
+
+    }
+
+    if(text.length > 4000){
+
+        showToast("Messages must be 4,000 characters or fewer.");
 
         return;
 
